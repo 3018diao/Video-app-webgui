@@ -119,14 +119,14 @@ function App() {
         <div className='video-container'>
           <div>
             {
-              stream && (callAccepted && !callEnded ) ? (
+              stream && (
                 <video
                   playsInline
                   muted
                   autoPlay
                   style={{width: '500px'}}
                   ref={myVideo}
-                />) : null
+                />)
             }
 
             <div>
