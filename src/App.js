@@ -27,7 +27,7 @@ function App() {
   const connectionRef = useRef();
 
   useEffect(() => {
-    setName(randomString(6));
+    setName(randomString(5));
 
     navigator.mediaDevices
       .getUserMedia({audio: true, video: true})
@@ -56,7 +56,7 @@ function App() {
   const callUser = (id2Call) => {
     const peer = new Peer({
       initiator: true,
-      steam: stream
+      stream: stream
     });
 
     peer.on('signal', (data) => {
@@ -64,7 +64,8 @@ function App() {
         user2Call: id2Call,
         signalData: data,
         from: myID,
-        name: name
+        name: name,
+        trickle: false
       });
     });
 
@@ -73,11 +74,41 @@ function App() {
       userVideo.current.srcObject = stream;
     });
 
+    socket.on('callAccepted', (signal) => {
+      setCallAccepted(true);
+      peer.signal(signal);
+    });
+
     connectionRef.current = peer;
   };
 
   const answerCall = () => {
+    setCallAccepted(true);
+    const peer = new Peer({
+      initiator: false,
+      steam: stream,
+      trickle: false
+    });
 
+    peer.on('signal', (data) => {
+      socket.emit('answerCall', {
+        signal: data,
+        to: caller,
+      });
+    });
+
+    peer.on('stream', (stream) => {
+      userVideo.current.srcObject = stream;
+    });
+
+    peer.signal(callerSignal);
+
+    connectionRef.current = peer;
+  };
+
+  const endCall = () => {
+    setCallEnded(false);
+    connectionRef.current.destory();
   };
 
   return (
@@ -108,9 +139,10 @@ function App() {
               value={name}
               onChange={e => setName(e.target.value)}
             />
-            <CopyToClipboard text={myID} style={{marginBottom: '2rem'}}>
+            <CopyToClipboard text={myID}>
               <Button>Your call ID</Button>
             </CopyToClipboard>
+            <h5 style={{marginBottom: '2rem'}}>a{myID}</h5>
             <Input
               style={{marginBottom: '20px'}}
               placeholder="Input other ID"
@@ -119,7 +151,7 @@ function App() {
             />
             <div>
               {callAccepted && !callEnded ?
-                (<Button danger type="primary">
+                (<Button danger type="primary" onClick={endCall}>
                   End call
                 </Button>) :
                 (<Button type="primary" onClick={() => callUser(id2Call)}>
