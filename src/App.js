@@ -17,7 +17,7 @@ function App() {
   const [caller, setCaller] = useState('');
   const [id2Call, setId2Call] = useState('');
   const [userName, setUserName] = useState('');
-  const [callerSignal, setCallerSignal] = useState(null);
+  const [callerSignal, setCallerSignal] = useState();
   const [callAccepted, setCallAccepted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
   const [receivingCall, setReceivingCall] = useState((false));
@@ -49,14 +49,14 @@ function App() {
       setCaller(data.from);
       setUserName(data.name);
       setCallerSignal(data.signal);
-    })
-
+    });
   }, []);
 
   const callUser = (id2Call) => {
     const peer = new Peer({
       initiator: true,
-      stream: stream
+      stream: stream,
+      trickle: false
     });
 
     peer.on('signal', (data) => {
@@ -64,8 +64,7 @@ function App() {
         user2Call: id2Call,
         signalData: data,
         from: myID,
-        name: name,
-        trickle: false
+        name: name
       });
     });
 
@@ -108,7 +107,7 @@ function App() {
 
   const endCall = () => {
     setCallEnded(false);
-    connectionRef.current.destory();
+    connectionRef.current.destroy();
   };
 
   return (
@@ -118,7 +117,14 @@ function App() {
         <div className='video-container'>
           <div>
             {
-              stream && (<video playsInline muted autoPlay style={{width: '500px'}} ref={myVideo}/>)
+              stream && (
+                <video
+                  playsInline
+                  muted
+                  autoPlay
+                  style={{width: '500px'}}
+                  ref={myVideo}
+                />)
             }
 
             <div>
@@ -129,7 +135,8 @@ function App() {
                   autoPlay
                   style={{width: '500px'}}
                   ref={userVideo}
-                />) : null}
+                />
+              ) : null}
             </div>
           </div>
           <div>
