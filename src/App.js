@@ -15,7 +15,7 @@ function App() {
   const [name, setName] = useState('');
   const [me, setMe] = useState('');
   const [idToCall, setIdToCall] = useState('');
-  const [callAccepted, setCallAcceted] = useState(false);
+  const [callAccepted, setCallAccepted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
   const [receivingCall, setReceivingCall] = useState(false);
   const [userName, setUserName] = useState('');
@@ -73,9 +73,8 @@ function App() {
       userVideo.current.srcObject = stream;
     });
 
-    //当接听方同意通话后获取信令
     socket.on('callAccepted', (signal) => {
-      setCallAcceted(true);
+      setCallAccepted(true);
       peer.signal(signal);
     });
 
@@ -84,7 +83,7 @@ function App() {
   };
   // 接听通话
   const answerCall = () => {
-    setCallAcceted(true);
+    setCallAccepted(true);
     const peer = new Peer({
       initiator: false,
       stream: stream,
@@ -104,7 +103,6 @@ function App() {
 
     peer.signal(callerSignal);
 
-    //存储peer对象
     connectionRef.current = peer;
   };
 
@@ -121,14 +119,14 @@ function App() {
         <div className='video-container'>
           <div>
             {
-              stream && (
+              stream && (callAccepted && !callEnded ) ? (
                 <video
                   playsInline
                   muted
                   autoPlay
                   style={{width: '500px'}}
                   ref={myVideo}
-                />)
+                />) : null
             }
 
             <div>
