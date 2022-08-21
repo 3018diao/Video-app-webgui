@@ -11,39 +11,37 @@ const socket = io.connect('http://localhost:5001');
 
 function App() {
 
-  const [stream, setStream] = useState(null);
+  const [stream, setStream] = useState();
   const [name, setName] = useState('');
-  const [myID, setMyID] = useState('');
-  const [caller, setCaller] = useState('');
-  const [id2Call, setId2Call] = useState('');
-  const [userName, setUserName] = useState('');
-  const [callerSignal, setCallerSignal] = useState();
-  const [callAccepted, setCallAccepted] = useState(false);
+  const [me, setMe] = useState('');
+  const [idToCall, setIdToCall] = useState('');
+  const [callAccepted, setCallAcceted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
-  const [receivingCall, setReceivingCall] = useState((false));
+  const [receivingCall, setReceivingCall] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [caller, setCaller] = useState('');
+  const [callerSignal, setCallerSignal] = useState();
 
   const myVideo = useRef();
   const userVideo = useRef();
   const connectionRef = useRef();
-
   useEffect(() => {
-    setName(randomString(5));
-
     navigator.mediaDevices
-      .getUserMedia({audio: true, video: true})
+      .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         setStream(stream);
-        // console.log(stream)
+        console.log(stream);
         myVideo.current.srcObject = stream;
       })
-      .catch(err => {
+      .catch((err) => {
         console.log(err);
       });
 
-    socket.on('myID', (id) => {
-      setMyID(id);
+    socket.on('me', (id) => {
+      setMe(id);
     });
 
+    //接听方获取从服务器传递的发起方数据
     socket.on('callUser', (data) => {
       setReceivingCall(true);
       setCaller(data.from);
@@ -52,41 +50,45 @@ function App() {
     });
   }, []);
 
-  const callUser = (id2Call) => {
+  //向另一方拨打视频电话
+  const callUser = (idTocall) => {
+    //实例化对等连接对象
     const peer = new Peer({
       initiator: true,
       stream: stream,
-      trickle: false
+      trickle: false,
     });
-
+    //传递信令数据
     peer.on('signal', (data) => {
       socket.emit('callUser', {
-        user2Call: id2Call,
+        userToCall: idTocall,
         signalData: data,
-        from: myID,
-        name: name
+        from: me,
+        name: name,
       });
     });
 
-    // get other stream
+    //获取对方的stream
     peer.on('stream', (stream) => {
       userVideo.current.srcObject = stream;
     });
 
+    //当接听方同意通话后获取信令
     socket.on('callAccepted', (signal) => {
-      setCallAccepted(true);
+      setCallAcceted(true);
       peer.signal(signal);
     });
 
+    //存储peer对象
     connectionRef.current = peer;
   };
-
+  // 接听通话
   const answerCall = () => {
-    setCallAccepted(true);
+    setCallAcceted(true);
     const peer = new Peer({
       initiator: false,
-      steam: stream,
-      trickle: false
+      stream: stream,
+      trickle: false,
     });
 
     peer.on('signal', (data) => {
@@ -102,10 +104,12 @@ function App() {
 
     peer.signal(callerSignal);
 
+    //存储peer对象
     connectionRef.current = peer;
   };
 
-  const endCall = () => {
+  //断开通信
+  const leaveCall = () => {
     setCallEnded(true);
     connectionRef.current.destroy();
   };
@@ -146,22 +150,22 @@ function App() {
               value={name}
               onChange={e => setName(e.target.value)}
             />
-            <CopyToClipboard text={myID}>
+            <CopyToClipboard text={me}>
               <Button>Your call ID</Button>
             </CopyToClipboard>
-            <h5 style={{marginBottom: '2rem'}}>a{myID}</h5>
+            {/*<h5 style={{marginBottom: '2rem'}}>{myID}</h5>*/}
             <Input
               style={{marginBottom: '20px'}}
               placeholder="Input other ID"
-              value={id2Call}
-              onChange={e => setId2Call(e.target.value)}
+              value={idToCall}
+              onChange={e => setIdToCall(e.target.value)}
             />
             <div>
               {callAccepted && !callEnded ?
-                (<Button danger type="primary" onClick={endCall}>
+                (<Button danger type="primary" onClick={leaveCall}>
                   End call
                 </Button>) :
-                (<Button type="primary" onClick={() => callUser(id2Call)}>
+                (<Button type="primary" onClick={() => callUser(idToCall)}>
                   Call
                 </Button>)
               }
