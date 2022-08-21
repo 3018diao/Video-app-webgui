@@ -106,7 +106,7 @@ function App() {
   };
 
   const endCall = () => {
-    setCallEnded(false);
+    setCallEnded(true);
     connectionRef.current.destroy();
   };
 
