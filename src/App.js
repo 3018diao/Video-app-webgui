@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "antd";
 import Input from "antd/es/input/Input";
 import { CopyToClipboard } from "react-copy-to-clipboard/lib/Component";
+import Webcam from "react-webcam";
 
 const socket = io.connect('http://localhost:5001');
 
@@ -27,7 +28,7 @@ function App() {
   const connectionRef = useRef();
   useEffect(() => {
     navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
+      .getUserMedia({video: true, audio: true})
       .then((stream) => {
         setStream(stream);
         console.log(stream);
@@ -118,6 +119,22 @@ function App() {
       <div className='container'>
         <div className='video-container'>
           <div>
+            <Webcam
+              ref={myVideo}
+              style={{
+                position: "absolute",
+                marginLeft: "auto",
+                marginRight: "auto",
+                left: 0,
+                right: 0,
+                textAlign: "center",
+                zindex: 9,
+                width: 640,
+                height: 480,
+              }}
+            >
+
+            </Webcam>
             {
               stream && (
                 <video
