@@ -135,16 +135,16 @@ function App() {
             >
 
             </Webcam>
-            {
-              stream && (
-                <video
-                  playsInline
-                  muted
-                  autoPlay
-                  style={{width: '500px'}}
-                  ref={myVideo}
-                />)
-            }
+            {/*{*/}
+            {/*  stream && (*/}
+            {/*    <video*/}
+            {/*      playsInline*/}
+            {/*      muted*/}
+            {/*      autoPlay*/}
+            {/*      style={{width: '500px'}}*/}
+            {/*      ref={myVideo}*/}
+            {/*    />)*/}
+            {/*}*/}
 
             <div>
               {callAccepted && !callEnded ? (
