@@ -1,5 +1,8 @@
 import './App.css';
 import Peer from 'simple-peer';
+import * as tf from "@tensorflow/tfjs";
+import * as bodyPix from "@tensorflow-models/body-pix";
+import dog from './utils/dog.png';
 import io from 'socket.io-client';
 import 'antd/dist/antd.min.css';
 import { useEffect, useRef, useState } from "react";
@@ -7,8 +10,10 @@ import { Button } from "antd";
 import Input from "antd/es/input/Input";
 import { CopyToClipboard } from "react-copy-to-clipboard/lib/Component";
 import Webcam from "react-webcam";
+const blazeface =require('@tensorflow-models/blazeface');
 
-const socket = io.connect('http://localhost:5001');
+
+const socket = io.connect('http://192.168.31.103:5001');
 
 function App() {
 
@@ -23,9 +28,110 @@ function App() {
   const [caller, setCaller] = useState('');
   const [callerSignal, setCallerSignal] = useState();
 
+  const canvasRef = useRef();
   const myVideo = useRef();
   const userVideo = useRef();
   const connectionRef = useRef();
+
+  // const runBodysegment = async () => {
+  //   const net = await bodyPix.load();
+  //   setInterval(() => {
+  //     detect(net);
+  //   }, 100)
+  // };
+
+  const runDetectFace = async () => {
+    const net = await blazeface.load();
+    setInterval(() => {
+      detect(net);
+    }, 3000);
+  };
+
+  // const detect = async (net) => {
+  //   if (typeof myVideo.current != "undefined" && myVideo.current !== null && myVideo.current.video.readyState === 4) {
+  //     const video = myVideo.current.video;
+  //     const videoHeight = video.videoHeight;
+  //     const videoWidth = video.videoWidth;
+  //
+  //     myVideo.current.video.width = videoWidth;
+  //     myVideo.current.video.height = videoHeight;
+  //
+  //     canvasRef.current.width = videoWidth;
+  //     canvasRef.current.height = videoHeight;
+  //
+  //     const person = await net.segmentPersonParts(video);
+  //     // console.log(person);
+  //
+  //     const coloredPartImage = bodyPix.toColoredPartMask(person);
+  //
+  //     bodyPix.drawMask(
+  //         canvasRef.current,
+  //         video,
+  //         coloredPartImage,
+  //         0.7,
+  //         0,
+  //         false
+  //     );
+  //   }
+  // }
+
+  const image = new Image();
+  // const image = ({img}) => <img src={"./util/dog.png"} alt="foo" />
+  image.src = dog;
+
+
+  // image.src = 'utils/dog.png';
+
+  const detect = async (net) => {
+    if (typeof userVideo.current != "undefined" && userVideo.current !== null && userVideo.current.video.readyState === 4) {
+      const video = userVideo.current.video;
+      const videoHeight = video.videoHeight;
+      const videoWidth = video.videoWidth;
+
+      userVideo.current.video.width = videoWidth;
+      userVideo.current.video.height = videoHeight;
+
+      canvasRef.current.width = videoWidth;
+      canvasRef.current.height = videoHeight;
+
+      const prediction = await net.estimateFaces(video,false);
+
+      const ctx = canvasRef.current.getContext("2d");
+
+      // ctx.drawImage(myVideo, 0,0,400, 300);
+
+      prediction.forEach((pred) => {
+        ctx.beginPath();
+        ctx.lineWidth = "4";
+        ctx.strokeStyle = "blue";
+
+        ctx.drawImage(
+            // dog,
+            image,
+            pred.topLeft[0],
+            pred.topLeft[1],
+            pred.bottomRight[0] - pred.topLeft[0],
+            pred.bottomRight[1] - pred.topLeft[1]
+        );
+        ctx.stroke();
+      });
+      // console.log(person);
+
+      // const coloredPartImage = bodyPix.toColoredPartMask(person);
+      //
+      // bodyPix.drawMask(
+      //     canvasRef.current,
+      //     video,
+      //     coloredPartImage,
+      //     0.7,
+      //     0,
+      //     false
+      // );
+    }
+  }
+
+  runDetectFace();
+
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({video: true, audio: true})
@@ -115,26 +221,39 @@ function App() {
 
   return (
     <div className="App">
-      <h1>HY-zoom</h1>
+      <h1>DOG-zoom</h1>
       <div className='container'>
         <div className='video-container'>
-          <div>
+          <header>
             <Webcam
               ref={myVideo}
               style={{
-                position: "absolute",
+                // position: "absolute",
                 marginLeft: "auto",
                 marginRight: "auto",
                 left: 0,
                 right: 0,
                 textAlign: "center",
                 zindex: 9,
-                width: 640,
-                height: 480,
+                width: 400,
+                height: 300,
               }}
             >
-
             </Webcam>
+            {/*<canvas*/}
+            {/*    ref={canvasRef}*/}
+            {/*    style={{*/}
+            {/*      position: "absolute",*/}
+            {/*      marginLeft: "auto",*/}
+            {/*      marginRight: "auto",*/}
+            {/*      left: 0,*/}
+            {/*      right: 0,*/}
+            {/*      textAlign: "center",*/}
+            {/*      zindex: 9,*/}
+            {/*      width: 400,*/}
+            {/*      height: 300,*/}
+            {/*    }}*/}
+            {/*/>*/}
             {/*{*/}
             {/*  stream && (*/}
             {/*    <video*/}
@@ -148,16 +267,40 @@ function App() {
 
             <div>
               {callAccepted && !callEnded ? (
-                <video
-                  playsInline
-                  muted
-                  autoPlay
-                  style={{width: '500px'}}
-                  ref={userVideo}
-                />
+                  <header>
+                    <Webcam
+                        ref={userVideo}
+                        style={{
+                          position: "absolute",
+                          marginLeft: "auto",
+                          marginRight: "auto",
+                          left: 0,
+                          right: 0,
+                          textAlign: "center",
+                          zindex: 9,
+                          width: 400,
+                          height: 300,
+                        }}
+                    >
+                    </Webcam>
+                    <canvas
+                        ref={canvasRef}
+                        style={{
+                          position: "absolute",
+                          marginLeft: "auto",
+                          marginRight: "auto",
+                          left: 0,
+                          right: 0,
+                          textAlign: "center",
+                          zindex: 9,
+                          width: 400,
+                          height: 300,
+                        }}
+                    />
+                  </header>
               ) : null}
             </div>
-          </div>
+          </header>
           <div>
             <Input
               style={{marginBottom: '20px'}}

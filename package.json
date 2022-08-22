@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@tensorflow-models/blazeface": "^0.0.7",
+    "@tensorflow-models/body-pix": "^2.2.0",
     "@tensorflow/tfjs": "^3.19.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.3.0",
